@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from config import firebase_config
+
+
+# initialize Firebase
+firebase_config.initialize_firebase()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,7 +42,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'authentication'
+    'authentication',
+    'medic_app',
+    'config'
 ]
 
 MIDDLEWARE = [
@@ -81,6 +88,9 @@ DATABASES = {
         'PASSWORD': 'Admin@123',
         'HOST': 'localhost',
         'PORT': '5432',
+        'OPTIONS': {
+            'options': '-c search_path=medic-db,public'
+        }
     }
 }
 

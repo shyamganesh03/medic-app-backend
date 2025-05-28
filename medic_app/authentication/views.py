@@ -1,4 +1,44 @@
-from django.http import HttpResponse
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from firebase_admin import auth
+from medic_app.models import Users
+import json
 
+@require_http_methods(["GET"])
 def home(request):
-    return HttpResponse("Hello, Django!")
+    return JsonResponse({"message": "Hello, Django!"})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def create_new_user(request):
+    try:
+        data = json.loads(request.body)
+
+        password = data.get('password')
+        email = data.get('email')
+        
+        # Basic validation
+        if not email or not password:
+            return JsonResponse({"error": "All fields (email, password) are required."}, status=400)
+
+        if Users.objects.filter(email=email).exists():
+            return JsonResponse({"error": "Email already in use."}, status=409)
+        
+        newuser = auth.create_user(email=email,password=password)
+    
+        # Create user
+        user = Users.objects.create(id=newuser.uid,email=email)
+        user.save()
+
+        return JsonResponse({
+            "message": "User created successfully.",
+            "user": {
+                "id": user.id,
+                "email": user.email,
+            }
+        }, status=201)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
