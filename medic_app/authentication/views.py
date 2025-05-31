@@ -3,12 +3,12 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from firebase_admin import auth
 from medic_app.models import Users
+from django.db import connection
 import json
 
 @require_http_methods(["GET"])
 def home(request):
     return JsonResponse({"message": "Hello, Django!"})
-
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -40,5 +40,27 @@ def create_new_user(request):
             }
         }, status=201)
 
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def delete_authenticated_user(request):
+    try:
+        data = json.loads(request.body)
+        id_token = data['id_token']
+        if not id_token:
+            return JsonResponse({"error": "id_token are required."}, status=400) 
+        decoded_token = auth.verify_id_token(id_token)
+        uid = decoded_token['uid']
+        auth.delete_user(uid)
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE TABLE USERS WHERE id = %s", [uid])
+        return JsonResponse({
+            "message": "User deleted successfully.",
+            "user": {
+                "id": id_token,
+            }
+        }, status=200)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
