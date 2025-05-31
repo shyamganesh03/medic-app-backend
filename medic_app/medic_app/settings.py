@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from config import firebase_config
-
+from decouple import config as envConfig
 
 # initialize Firebase
 firebase_config.initialize_firebase()
@@ -25,10 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+j2u78*rf-ccl5kt%ms6ef7jty=ybpko+m3#))fgw1dp-328fx'
+SECRET_KEY = envConfig('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = envConfig('DEBUG')
 
 ALLOWED_HOSTS = []
 
