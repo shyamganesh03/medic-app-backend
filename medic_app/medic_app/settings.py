@@ -36,15 +36,16 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'authentication',
+    'config',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.sessions',
     'django.contrib.staticfiles',
-    'authentication',
     'medic_app',
-    'config'
+    'users'
 ]
 
 MIDDLEWARE = [
