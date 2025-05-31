@@ -1,8 +1,10 @@
-python manage.py runserver
+python medic_app/manage.py runserver
 
 python manage.py startapp blog
 
-python manage.py migrate
+python medic_app/manage.py migrate
+
+pip freeze > requirements.txt
 
 venv\Scripts\activate
 
