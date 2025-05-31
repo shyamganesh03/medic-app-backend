@@ -3,5 +3,6 @@ from . import views
 
 urlpatterns = [
     path('/get_user_details',views.get_user_details),
-    path('/update_user_details',views.update_user_details)
+    path('/update_user_details',views.update_user_details),
+    path('/upload_image',views.upload_image)
 ]

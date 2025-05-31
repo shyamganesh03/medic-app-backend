@@ -1,5 +1,3 @@
-# fire_base_config.py
-
 from firebase_admin import credentials, initialize_app
 from decouple import config
 

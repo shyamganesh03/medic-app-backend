@@ -1,8 +1,11 @@
-from django.http import JsonResponse
+from django.http import JsonResponse,HttpRequest
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.db import connection
+from .upload_file import upload_photo
 import json
+import tempfile
+import os
 
 
 @require_http_methods(["GET"])
@@ -72,3 +75,33 @@ def update_user_details(request):
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def upload_image(request:HttpRequest):
+    try:
+        uid = request.POST.get('uid')
+        photo = request.FILES.get('photo')
+        category_type = request.POST.get('type')
+        
+        if not uid or not photo or not category_type:
+            return JsonResponse({"error": "some of the required parameters are missing (uid,photo or category_type)"}, status=400)
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
+            for chunk in photo.chunks():
+                temp_file.write(chunk)
+            temp_file_path = temp_file.name
+
+        result = upload_photo(temp_file_path,uid,category_type)
+        os.remove(temp_file_path)
+        
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE users SET profile_pic = %s", [result['webViewLink']])
+        
+        return JsonResponse({
+            "message":"Image has been uploaded successfully."
+        },status=201)
+        
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+        
