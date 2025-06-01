@@ -32,7 +32,7 @@ SECRET_KEY = envConfig('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = envConfig('DEBUG')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['medic-app-backend.onrender.com']
 
 
 # Application definition
