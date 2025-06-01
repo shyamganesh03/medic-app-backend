@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from config import firebase_config
 from decouple import config as envConfig
+import dj_database_url
+
 
 # initialize Firebase
 firebase_config.initialize_firebase()
@@ -82,17 +84,7 @@ WSGI_APPLICATION = 'medic_app.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'Admin@123',
-        'HOST': 'localhost',
-        'PORT': '5432',
-        'OPTIONS': {
-            'options': '-c search_path=medic-db,public'
-        }
-    }
+    'default': dj_database_url.config(default=envConfig('DATABASE_URL'))
 }
 
 

@@ -6,10 +6,6 @@ from medic_app.models import Users
 from django.db import connection
 import json
 
-@require_http_methods(["GET"])
-def home(request):
-    return JsonResponse({"message": "Hello, Django!"})
-
 @csrf_exempt
 @require_http_methods(["POST"])
 def create_new_user(request):
@@ -26,17 +22,19 @@ def create_new_user(request):
         if Users.objects.filter(email=email).exists():
             return JsonResponse({"error": "Email already in use."}, status=409)
         
+        print("worked2")
+        
         newuser = auth.create_user(email=email,password=password)
     
         # Create user
-        user = Users.objects.create(id=newuser.uid,email=email)
-        user.save()
+        with connection.cursor() as cursor:
+            cursor.execute(f"INSERT INTO users (id,email) VALUES('{newuser.uid}','{email}')")
 
         return JsonResponse({
             "message": "User created successfully.",
             "user": {
-                "id": user.id,
-                "email": user.email,
+                "id": newuser.uid,
+                "email": email,
             }
         }, status=201)
 

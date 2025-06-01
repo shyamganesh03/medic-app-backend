@@ -254,7 +254,6 @@ class Users(models.Model):
     shop_name = models.TextField(blank=True, null=True)
     is_phone_number_verified = models.BooleanField(blank=True, null=True)
     is_email_verified = models.BooleanField(blank=True, null=True)
-    is_admin = models.BooleanField(blank=True, null=True)
     role = models.CharField(max_length=20)
     is_active = models.BooleanField(blank=True, null=True)
     created_at = models.DateTimeField(blank=True, null=True)
