@@ -14,7 +14,6 @@ from pathlib import Path
 from config import firebase_config
 from decouple import config as envConfig
 import dj_database_url
-import os
 
 
 # initialize Firebase
