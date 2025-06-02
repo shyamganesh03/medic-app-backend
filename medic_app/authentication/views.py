@@ -22,8 +22,6 @@ def create_new_user(request):
         if Users.objects.filter(email=email).exists():
             return JsonResponse({"error": "Email already in use."}, status=409)
         
-        print("worked2")
-        
         newuser = auth.create_user(email=email,password=password)
     
         # Create user

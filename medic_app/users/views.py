@@ -12,6 +12,7 @@ import os
 def get_user_details(request):
     try:
         uid = request.GET.get("uid")
+        print("uid: ",uid)
         if not uid:
             return  JsonResponse({"error": "uid is required."}, status=400)
         with connection.cursor() as cursor:
@@ -22,7 +23,7 @@ def get_user_details(request):
         else:
             columns = [col[0] for col in cursor.description]
             user_data = dict(zip(columns, row))
-          
+        print("user_data: ",user_data)
         return JsonResponse({
             "user": user_data
         }, status=200)
