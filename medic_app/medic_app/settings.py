@@ -14,7 +14,7 @@ from pathlib import Path
 from config import firebase_config
 from decouple import config as envConfig
 import dj_database_url
-
+import os
 
 # initialize Firebase
 firebase_config.initialize_firebase()
@@ -33,6 +33,51 @@ SECRET_KEY = envConfig('SECRET_KEY')
 DEBUG = envConfig('DEBUG')
 
 ALLOWED_HOSTS = ['medic-app-backend.onrender.com', 'localhost', '127.0.0.1']
+
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'django.log'),
+            'formatter': 'verbose',
+        },
+    },
+
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+
 
 
 # Application definition
