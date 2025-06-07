@@ -26,8 +26,7 @@ def get_user_details(request:HttpRequest):
                 return JsonResponse({"error": "User not found."}, status=404)
             columns = [col[0] for col in cursor.description]
             user_data = dict(zip(columns, row))
-
-        logger.info(f"user_data: {user_data}")
+            
         return JsonResponse({"user": user_data}, status=200)
 
     except Exception as e:

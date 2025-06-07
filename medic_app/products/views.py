@@ -49,7 +49,32 @@ def get_product_list(request:HttpRequest):
     except Exception as e:
         return JsonResponse({"error":str(e)},status=500)
       
-
+@require_http_methods(['GET'])
+def get_product_details_by_id(request:HttpRequest):      
+    try:
+      product_id = request.GET.get('product_id')  
+      logger.info(f"product_id: {product_id}")
+      if not product_id:
+          return JsonResponse({"error":"product_id is required"},status=400)
+      with connection.cursor() as cursor:
+          cursor.execute("SELECT p.id AS product_id, p.name AS product_name, p.description, p.price, p.discount, p.available_stock, p.created_at, p.updated_at, c.id AS category_id, c.name AS category_name FROM products p INNER JOIN categories c ON p.category_id = c.id WHERE p.id = %s", [product_id])
+          row = cursor.fetchone()
+          if not row:
+             return JsonResponse({
+              "item": ""
+          }, status=200)
+             
+          else:
+              columns = [col[0] for col in cursor.description]
+              products_data = dict(zip(columns, row))
+        
+      return JsonResponse({
+          "item": products_data
+      }, status=200)
+      
+    except Exception as e:
+        return JsonResponse({"error":str(e)},status=500)
+  
 @require_http_methods(['GET'])
 def get_product_list_by_category_id(request:HttpRequest):
     try:

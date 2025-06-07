@@ -6,4 +6,5 @@ urlpatterns = [
     path('/get_product_list',views.get_product_list),
     path('/get_product_list_by_category_id',views.get_product_list_by_category_id),
     path('/add_products_bulk',views.add_products_bulk),
+    path('/get_product_details_by_id',views.get_product_details_by_id)
 ]
