@@ -9,6 +9,7 @@ import os
 import logging
 
 logger = logging.getLogger("medic_app.users")
+logger = logging.getLogger("medic_app.users")
 
 @require_http_methods(["GET"])
 def get_user_details(request):
@@ -16,24 +17,23 @@ def get_user_details(request):
         uid = request.GET.get("uid")
         logger.info(f"uid: {uid}")
         if not uid:
-            return  JsonResponse({"error": "uid is required."}, status=400)
+            return JsonResponse({"error": "uid is required."}, status=400)
+        
         with connection.cursor() as cursor:
-          cursor.execute("SELECT * FROM users WHERE id = %s", [uid])
-          row = cursor.fetchone() 
-        logger.info(f"row: {row}")
-        if not row:
-           return JsonResponse({"error": "User not found."}, status=404)
-        else:
+            cursor.execute("SELECT * FROM users WHERE id = %s", [uid])
+            row = cursor.fetchone()
+            logger.info(f"row: {row}")
+            if not row:
+                return JsonResponse({"error": "User not found."}, status=404)
             columns = [col[0] for col in cursor.description]
             user_data = dict(zip(columns, row))
-        logger.info("user_data: ",user_data)
-        return JsonResponse({
-            "user": user_data
-        }, status=200)
-        
+
+        logger.info(f"user_data: {user_data}")
+        return JsonResponse({"user": user_data}, status=200)
+
     except Exception as e:
-        logger.info("error: ",str(e))
-        return JsonResponse({"error":str(e)},status=500)
+        logger.exception("An error occurred while fetching user details.")
+        return JsonResponse({"error": str(e)}, status=500)
     
 @csrf_exempt
 @require_http_methods(["POST"])
