@@ -9,10 +9,9 @@ import os
 import logging
 
 logger = logging.getLogger("medic_app.users")
-logger = logging.getLogger("medic_app.users")
 
 @require_http_methods(["GET"])
-def get_user_details(request):
+def get_user_details(request:HttpRequest):
     try:
         uid = request.GET.get("uid")
         logger.info(f"uid: {uid}")
@@ -37,7 +36,7 @@ def get_user_details(request):
     
 @csrf_exempt
 @require_http_methods(["POST"])
-def update_user_details(request):
+def update_user_details(request:HttpRequest):
     try:
         data = json.loads(request.body)
         uid = data.get('uid')
