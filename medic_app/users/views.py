@@ -106,10 +106,15 @@ def upload_image(request: HttpRequest):
             temp_file_path = temp_file.name
 
         result = upload_photo(temp_file_path, uid, category_type)
-        os.remove(temp_file_path)
+        logger.info(f"result: {result}")
+        profile_pic = f"https://drive.google.com/uc?export=view&id={result['id']}"
+        
+        os.remove(temp_file_path) 
+        
+        logger.info(f"profile_pic: {profile_pic}")
 
         with connection.cursor() as cursor:
-            cursor.execute("UPDATE users SET profile_pic = %s WHERE id = %s", [result['webViewLink'], uid])
+            cursor.execute("UPDATE users SET profile_pic = %s WHERE id = %s", [profile_pic, uid])
 
         return JsonResponse({
             "message": "Image has been uploaded successfully."
