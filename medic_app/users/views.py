@@ -58,6 +58,7 @@ def update_user_details(request:HttpRequest):
                 if key == 'id':
                     continue
                 user_data[key] = data.get(key, user_data_db.get(key))
+            user_email = user_data_db.get('email')
 
             set_clauses = []
             update_values = []
@@ -74,37 +75,47 @@ def update_user_details(request:HttpRequest):
 
             cursor.execute(update_query, update_values)
 
-        return JsonResponse({"message": f"User {uid} has been updated successfully."}, status=200)
+        return JsonResponse({"message": f"User {user_email} has been updated successfully."}, status=200)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
 @csrf_exempt
 @require_http_methods(["POST"])
-def upload_image(request:HttpRequest):
+def upload_image(request: HttpRequest):
     try:
         uid = request.POST.get('uid')
         photo = request.FILES.get('photo')
         category_type = request.POST.get('type')
-        
-        if not uid or not photo or not category_type:
-            return JsonResponse({"error": "some of the required parameters are missing (uid,photo or category_type)"}, status=400)
+        mime_type = request.POST.get('mime_type')
+        logger.info(f"payload = {uid} , {photo} , {category_type} , {mime_type}")
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
+        if not uid or not photo or not category_type or not mime_type:
+            return JsonResponse({
+                "error": "Missing required parameters (uid, photo, type, mime_type)"
+            }, status=400)
+
+        ext = mime_type.split('/')[1]
+        
+        logger.info(f"ext: {ext}")
+        
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{ext}") as temp_file:
             for chunk in photo.chunks():
                 temp_file.write(chunk)
             temp_file_path = temp_file.name
 
-        result = upload_photo(temp_file_path,uid,category_type)
+        result = upload_photo(temp_file_path, uid, category_type)
         os.remove(temp_file_path)
-        
+
         with connection.cursor() as cursor:
-            cursor.execute("UPDATE users SET profile_pic = %s", [result['webViewLink']])
-        
+            cursor.execute("UPDATE users SET profile_pic = %s WHERE id = %s", [result['webViewLink'], uid])
+
         return JsonResponse({
-            "message":"Image has been uploaded successfully."
-        },status=201)
-        
+            "message": "Image has been uploaded successfully."
+        }, status=201)
+
     except Exception as e:
+        logger.exception("Image upload failed")
         return JsonResponse({"error": str(e)}, status=500)
-        
+
