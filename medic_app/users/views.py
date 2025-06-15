@@ -7,6 +7,7 @@ import json
 import tempfile
 import os
 import logging
+from constant import address_table_fields
 
 logger = logging.getLogger("medic_app.users")
 
@@ -35,50 +36,76 @@ def get_user_details(request:HttpRequest):
     
 @csrf_exempt
 @require_http_methods(["POST"])
-def update_user_details(request:HttpRequest):
+def update_user_details(request: HttpRequest):
     try:
         data = json.loads(request.body)
         uid = data.get('uid')
-
+        logger.info(f"uid: {uid}")
         if not uid:
             return JsonResponse({"error": "uid is required."}, status=400)
 
         with connection.cursor() as cursor:
+            
             cursor.execute("SELECT * FROM users WHERE id = %s", [uid])
             row = cursor.fetchone()
-
             if not row:
                 return JsonResponse({"error": "User not found."}, status=404)
 
-            columns = [col[0] for col in cursor.description]
-            user_data_db = dict(zip(columns, row))
+            user_columns = [col[0] for col in cursor.description]
+            user_data_db = dict(zip(user_columns, row))
 
-            user_data = {}
-            for key in columns:
-                if key == 'id':
-                    continue
-                user_data[key] = data.get(key, user_data_db.get(key))
-            user_email = user_data_db.get('email')
+            user_data = {
+                key: data.get(key, user_data_db.get(key))
+                for key in user_columns if key != 'id'
+            }
 
-            set_clauses = []
-            update_values = []
-
-            for key, value in user_data.items():
-                set_clauses.append(f"{key} = %s")
-                update_values.append(value)
-
-            if not set_clauses:
-                return JsonResponse({"message": "No fields to update."}, status=400)
-
-            update_query = f"UPDATE users SET {', '.join(set_clauses)} WHERE id = %s"
+            set_clauses = [f"{key} = %s" for key in user_data]
+            update_values = list(user_data.values())
             update_values.append(uid)
 
+            address = data.get('address')
+            if address:
+                cursor.execute("SELECT * FROM addresses WHERE user_id = %s", [uid])
+                address_row = cursor.fetchone()
+                user_address_db = {}
+                if address_row:
+                    address_columns = [col[0] for col in cursor.description]
+                    user_address_db = dict(zip(address_columns, address_row))
+
+                address_data = {
+                    key: address.get(key, user_address_db.get(key))
+                    for key in address_table_fields.address_fields
+                }
+
+                set_address_clauses = [f"{key} = %s" for key in address_data]
+                update_or_create_values = list(address_data.values())
+
+                if address_row:
+                    update_or_create_values.append(uid)
+                    address_query = f"""
+                        UPDATE addresses
+                        SET {', '.join(set_address_clauses)}
+                        WHERE user_id = %s
+                    """
+                else:
+                    address_query = f"""
+                        INSERT INTO addresses ({', '.join(address_data.keys())})
+                        VALUES ({', '.join(['%s'] * len(address_data))})
+                    """
+
+                logger.info(f"Executing address query: {address_query} with {update_or_create_values}")
+                cursor.execute(address_query, update_or_create_values)
+
+            update_query = f"UPDATE users SET {', '.join(set_clauses)} WHERE id = %s"
+            logger.info(f"Executing user update query: {update_query} with {update_values}")
             cursor.execute(update_query, update_values)
 
-        return JsonResponse({"message": f"User {user_email} has been updated successfully."}, status=200)
+        return JsonResponse({"message": f"User {user_data_db.get('email')} has been updated successfully."}, status=200)
 
     except Exception as e:
+        logger.exception("Error updating user details")
         return JsonResponse({"error": str(e)}, status=500)
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
