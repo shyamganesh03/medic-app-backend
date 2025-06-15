@@ -1,1 +1,1 @@
-address_fields = ['user_id','type','house_no','street_name','city','state','postal_code','country','is_default']
+address_fields = ['user_id','type','house_no','address_line_1','city','state','postal_code','country','is_default']

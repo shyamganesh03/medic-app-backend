@@ -19,8 +19,15 @@ def get_user_details(request:HttpRequest):
         if not uid:
             return JsonResponse({"error": "uid is required."}, status=400)
         
+        
         with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM users WHERE id = %s", [uid])
+            cursor.execute("""
+                           select u.id, u.full_name, u.email, u.profile_pic, u.phone_number, u.calling_code, u.country, u.shop_name, 
+                           u.is_phone_number_verified, u.is_email_verified, u."role",u.is_active, a.id as address_id, a.user_id,a."type",
+                           a.house_no,a.address_line_1, a.city,a.state,a.postal_code,a.country, a.is_default from users u inner join addresses a 
+                           on u.id = a.user_id where u.id = %s ;
+                           """, [uid]
+                           )
             row = cursor.fetchone()
             logger.info(f"row: {row}")
             if not row:
@@ -28,7 +35,18 @@ def get_user_details(request:HttpRequest):
             columns = [col[0] for col in cursor.description]
             user_data = dict(zip(columns, row))
             
-        return JsonResponse({"user": user_data}, status=200)
+            address_data = {}
+            new_user_data = {}
+            
+            for key, value in user_data.items():
+                if key in address_table_fields.address_fields or key == 'address_id':
+                    address_data[key if key != 'address_id' else 'id'] = value
+                else:
+                    new_user_data[key] = value
+            if new_user_data:
+             new_user_data['address'] = address_data
+            
+        return JsonResponse({"user": new_user_data}, status=200)
 
     except Exception as e:
         logger.exception("An error occurred while fetching user details.")
