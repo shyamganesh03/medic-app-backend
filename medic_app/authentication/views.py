@@ -33,6 +33,7 @@ def create_new_user(request):
         # Create user
         with connection.cursor() as cursor:
             cursor.execute(f"INSERT INTO users (id,email) VALUES('{newuser.uid}','{email}')")
+            cursor.execute(f"INSERT INTO addresses (user_id) VALUES('{newuser.uid}')")
 
         return JsonResponse({
             "message": "User created successfully.",
