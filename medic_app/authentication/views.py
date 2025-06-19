@@ -5,7 +5,9 @@ from firebase_admin import auth
 from medic_app.models import Users
 from django.db import connection
 import json
+import logging
 
+logger = logging.getLogger("medic_app.auth")
 @csrf_exempt
 @require_http_methods(["POST"])
 def create_new_user(request):
@@ -15,6 +17,8 @@ def create_new_user(request):
         password = data.get('password')
         email = data.get('email')
         
+        logger.info(f"Email: {email}")
+        
         # Basic validation
         if not email or not password:
             return JsonResponse({"error": "All fields (email, password) are required."}, status=400)
@@ -23,6 +27,8 @@ def create_new_user(request):
             return JsonResponse({"error": "Email already in use."}, status=409)
         
         newuser = auth.create_user(email=email,password=password)
+        
+        logger.info(f"New user created with UID: {newuser.uid}")
     
         # Create user
         with connection.cursor() as cursor:
