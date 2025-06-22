@@ -1,6 +1,8 @@
 python medic_app/manage.py runserver
 
-python medic_app/manage.py startapp blog 
+python manage.py startapp blog
+
+python manage.py startproject blog
 
 python medic_app/manage.py migrate
 
