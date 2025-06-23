@@ -95,10 +95,11 @@ INSTALLED_APPS = [
     'authentication',
     'users',
     'products',
+    'payment'
 ]
 
 MIDDLEWARE = [
-    'middleware.firebase_auth.medic_middleware',
+    # 'middleware.firebase_auth.medic_middleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

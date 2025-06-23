@@ -7,7 +7,8 @@ import json
 import tempfile
 import os
 import logging
-from constant import address_table_fields
+from constant import fields_meta_data
+from datetime import datetime
 
 logger = logging.getLogger("medic_app.users")
 
@@ -39,7 +40,7 @@ def get_user_details(request:HttpRequest):
             new_user_data = {}
             
             for key, value in user_data.items():
-                if key in address_table_fields.address_fields or key == 'address_id':
+                if key in fields_meta_data.address_fields or key == 'address_id':
                     address_data[key if key != 'address_id' else 'id'] = value
                 else:
                     new_user_data[key] = value
@@ -74,12 +75,11 @@ def update_user_details(request: HttpRequest):
 
             user_data = {
                 key: data.get(key, user_data_db.get(key))
-                for key in user_columns if key != 'id'
+                for key in fields_meta_data.user_details_fields
             }
 
             set_clauses = [f"{key} = %s" for key in user_data]
             update_values = list(user_data.values())
-            update_values.append(uid)
 
             address = data.get('address')
             if address:
@@ -92,30 +92,31 @@ def update_user_details(request: HttpRequest):
 
                 address_data = {
                     key: address.get(key, user_address_db.get(key))
-                    for key in address_table_fields.address_fields
+                    for key in fields_meta_data.address_fields
                 }
 
                 set_address_clauses = [f"{key} = %s" for key in address_data]
                 update_or_create_values = list(address_data.values())
+                current_time_stamp = datetime.now()
 
                 if address_row:
+                    update_or_create_values.append(f"'{current_time_stamp}'")
                     update_or_create_values.append(uid)
                     address_query = f"""
                         UPDATE addresses
-                        SET {', '.join(set_address_clauses)}
+                        SET {', '.join(set_address_clauses)}, updated_at = %s
                         WHERE user_id = %s
-                    """
-                else:
-                    address_query = f"""
-                        INSERT INTO addresses ({', '.join(address_data.keys())})
-                        VALUES ({', '.join(['%s'] * len(address_data))})
                     """
 
                 logger.info(f"Executing address query: {address_query} with {update_or_create_values}")
                 cursor.execute(address_query, update_or_create_values)
 
-            update_query = f"UPDATE users SET {', '.join(set_clauses)} WHERE id = %s"
+            update_query = f"UPDATE users SET {', '.join(set_clauses)}, updated_at = %s WHERE id = %s"
             logger.info(f"Executing user update query: {update_query} with {update_values}")
+            
+            update_values.append(f"'{current_time_stamp}'")
+            update_values.append(uid)
+            
             cursor.execute(update_query, update_values)
 
         return JsonResponse({"message": f"User {user_data_db.get('email')} has been updated successfully."}, status=200)
@@ -123,7 +124,6 @@ def update_user_details(request: HttpRequest):
     except Exception as e:
         logger.exception("Error updating user details")
         return JsonResponse({"error": str(e)}, status=500)
-
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -157,9 +157,11 @@ def upload_image(request: HttpRequest):
         os.remove(temp_file_path) 
         
         logger.info(f"profile_pic: {profile_pic}")
+        current_time_stamp = datetime.now()
+        
 
         with connection.cursor() as cursor:
-            cursor.execute("UPDATE users SET profile_pic = %s WHERE id = %s", [profile_pic, uid])
+            cursor.execute("UPDATE users SET profile_pic = %s, updated_at = %s WHERE id = %s", [profile_pic,current_time_stamp,uid])
 
         return JsonResponse({
             "message": "Image has been uploaded successfully."

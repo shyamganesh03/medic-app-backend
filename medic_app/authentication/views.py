@@ -22,9 +22,6 @@ def create_new_user(request):
         # Basic validation
         if not email or not password:
             return JsonResponse({"error": "All fields (email, password) are required."}, status=400)
-
-        if Users.objects.filter(email=email).exists():
-            return JsonResponse({"error": "Email already in use."}, status=409)
         
         newuser = auth.create_user(email=email,password=password)
         
@@ -32,9 +29,10 @@ def create_new_user(request):
     
         # Create user
         with connection.cursor() as cursor:
-            cursor.execute(f"INSERT INTO users (id,email) VALUES('{newuser.uid}','{email}')")
+            cursor.execute(f"INSERT INTO users (id,email,is_active) VALUES('{newuser.uid}','{email}','true')")
             cursor.execute(f"INSERT INTO addresses (user_id) VALUES('{newuser.uid}')")
-
+            cursor.execute(f"INSERT INTO user_payment_management (user_id) VALUES('{newuser.uid}')")
+            
         return JsonResponse({
             "message": "User created successfully.",
             "user": {
