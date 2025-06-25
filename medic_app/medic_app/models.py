@@ -6,6 +6,7 @@
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 
 
 class ActivityLogs(models.Model):
@@ -164,10 +165,10 @@ class DjangoSession(models.Model):
 
 class OrderItems(models.Model):
     id = models.UUIDField(primary_key=True)
-    order = models.ForeignKey('Orders', models.DO_NOTHING)
-    product = models.ForeignKey('Products', models.DO_NOTHING)
+    order_id = models.ForeignKey('Orders', models.DO_NOTHING)
+    product_id = models.ForeignKey('Products', models.DO_NOTHING)
     quantity = models.IntegerField()
-    price_at_purchase = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
         managed = False
@@ -176,11 +177,18 @@ class OrderItems(models.Model):
 
 class Orders(models.Model):
     id = models.UUIDField(primary_key=True)
-    user = models.ForeignKey('Users', models.DO_NOTHING)
-    products = models.JSONField(blank=True, null=True)
-    total_price = models.FloatField(blank=True, null=True)
+    user_id = models.ForeignKey('Users', models.DO_NOTHING)
     status = models.CharField(max_length=100, blank=True, null=True)
-    shop_vendor_id = models.UUIDField(blank=True, null=True)
+    cf_order_id = models.TextField(blank=True, null=True)
+    net_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    discount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    currency = models.CharField(max_length=10, blank=True, null=True)
+    final_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    order_items_ids = ArrayField(
+        base_field=models.TextField(),
+        blank=True,
+        default=list
+    )
     created_at = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(blank=True, null=True)
 
@@ -191,15 +199,14 @@ class Orders(models.Model):
 
 class Payments(models.Model):
     id = models.UUIDField(primary_key=True)
-    user = models.ForeignKey('Users', models.DO_NOTHING)
-    order = models.ForeignKey(Orders, models.DO_NOTHING)
-    invoice_number = models.TextField(unique=True)
+    user_id = models.ForeignKey('Users', models.DO_NOTHING)
+    order_id = models.ForeignKey(Orders, models.DO_NOTHING)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=10, blank=True, null=True)
     payment_method = models.CharField(max_length=50, blank=True, null=True)
     payment_status = models.CharField(max_length=20, blank=True, null=True)
-    tax_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    tax_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     paid_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(blank=True, null=True)
