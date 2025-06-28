@@ -13,7 +13,3 @@ venv\Scripts\activate
 pip install -r requirements.txt
 
 http://127.0.0.1:8000/authentication/create_new_user
-
-pip uninstall cashfree_pg && pip install cashfree_pg
-
-python3.11 -m pip install cashfree_pg

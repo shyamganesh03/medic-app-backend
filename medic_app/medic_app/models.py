@@ -17,7 +17,7 @@ class ActivityLogs(models.Model):
     created_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'activity_logs'
 
 
@@ -168,10 +168,10 @@ class OrderItems(models.Model):
     order_id = models.ForeignKey('Orders', models.DO_NOTHING)
     product_id = models.ForeignKey('Products', models.DO_NOTHING)
     quantity = models.IntegerField()
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.FloatField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'order_items'
 
 
@@ -184,16 +184,12 @@ class Orders(models.Model):
     discount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     currency = models.CharField(max_length=10, blank=True, null=True)
     final_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
-    order_items_ids = ArrayField(
-        base_field=models.TextField(),
-        blank=True,
-        default=list
-    )
+    order_items_ids = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(blank=True, null=True)
     updated_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'orders'
 
 
@@ -212,7 +208,7 @@ class Payments(models.Model):
     updated_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'payments'
 
 
@@ -228,7 +224,7 @@ class Products(models.Model):
     updated_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'products'
 
 
@@ -242,7 +238,7 @@ class UserPaymentManagement(models.Model):
     updated_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'user_payment_management'
 
 
@@ -264,5 +260,5 @@ class Users(models.Model):
     updated_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'users'
