@@ -189,3 +189,20 @@ def create_order(request: HttpRequest):
     except Exception as e:
         logger.exception("Error in create_order")
         return JsonResponse({"error": str(e)}, status=500)
+    
+    
+@require_http_methods(['GET'])
+def get_order_details(request: HttpRequest):
+    try:
+        order_id = request.GET.get('order_id')
+        with connection.cursor() as cursor:
+         cursor.execute('select * from orders where id = %s',[order_id])
+         row = cursor.fetchone()
+        if not row:
+            return JsonResponse({"error": "Order not found."}, status=404)
+        columns = [col[0] for col in cursor.description]
+        order_data = dict(zip(columns, row))
+        return JsonResponse({"order_details": order_data },status=200)
+    except Exception as e:
+     return JsonResponse({"error": str(e)}, status=500)
+    
