@@ -8,44 +8,6 @@ import requests
 import uuid
 from datetime import datetime, timedelta, timezone
 
-# curl --request POST 
-#     --url https://sandbox.cashfree.com/pg/orders 
-#     --header 'x-client-id: TEST430329ae80e0f32e41a393d78b923034'
-#     --header 'x-client-secret: TESTaf195616268bd6202eeb3bf8dc458956e7192a85'
-#     --header 'Accept: application/json' 
-#     --header 'Content-Type: application/json' 
-#     --header 'x-api-version: 2025-01-01' 
-#     --data '{
-#     "order_amount": 1.00,
-#     "order_currency": "INR",
-#     "order_id": "devstudio_7344521686389347997",
-#     "customer_details": {
-#         "customer_id": "devstudio_user",
-#         "customer_phone": "8474090589",
-#         "customer_name": "Harshith",
-#         "customer_email": "test@cashfree.com"
-#     },
-#     "order_meta": {
-#         "return_url": "https://www.cashfree.com/devstudio/preview/pg/mobile/hybrid?order_id={order_id}",
-#         "payment_methods": "cc,dc,upi"
-#     },
-#     "cart_details": {
-#         "cart_items": [
-#             {
-#                 "item_id": "devstudio_cart_id",
-#                 "item_name": "Shoes",
-#                 "item_description": "Durable, comfortable, and perfect for adding personality to any outfit.",
-#                 "item_image_url": "https://cashfreelogo.cashfree.com/website/landings-cache/landings/occ/brownShoe.png",
-#                 "item_original_unit_price": 1.00,
-#                 "item_discounted_unit_price": 1.00,
-#                 "item_quantity": 1,
-#                 "item_currency": "INR"
-#             }
-#         ]
-#     },
-#     "order_expiry_time": "2025-06-29T00:28:23.920Z"
-# }'
-
 logger = logging.getLogger("medic_app.orders")
 
 x_client_id= 'TEST430329ae80e0f32e41a393d78b923034'
@@ -114,6 +76,7 @@ def create_order(request: HttpRequest):
             },
             "order_expiry_time": order_expiry_time
         }
+        
         
         logger.info(f"Payload: {payload}")
 
@@ -206,3 +169,17 @@ def get_order_details(request: HttpRequest):
     except Exception as e:
      return JsonResponse({"error": str(e)}, status=500)
     
+    
+@require_http_methods(['GET'])
+def get_order_payment_details(request: HttpRequest):
+    try:
+        order_id = request.GET.get('order_id')
+        
+        payment_details = requests.get(f'{payment_url}/orders/{order_id}', headers=headers)
+        final_response  = payment_details.json()
+        logger.info(f"Payment details response: {final_response}")
+        if payment_details.status_code == 404:
+            return JsonResponse({"error": final_response['message']}, status=404)
+        return JsonResponse({"payment_details": final_response}, status=200)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
