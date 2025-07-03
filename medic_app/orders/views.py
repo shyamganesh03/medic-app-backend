@@ -168,7 +168,21 @@ def get_order_details(request: HttpRequest):
         return JsonResponse({"order_details": order_data },status=200)
     except Exception as e:
      return JsonResponse({"error": str(e)}, status=500)
-    
+
+@require_http_methods(['GET'])
+def get_user_order_details(request: HttpRequest):
+    try:
+        u_id = request.GET.get('uid')
+        with connection.cursor() as cursor:
+         cursor.execute('select * from orders where user_id = %s',[u_id])
+         rows = cursor.fetchall()
+        if not rows:
+            return JsonResponse({"error": "Order not found."}, status=404)
+        columns = [col[0] for col in cursor.description]
+        order_data = [dict(zip(columns, row)) for row in rows]
+        return JsonResponse({"order_details": order_data },status=200)
+    except Exception as e:
+     return JsonResponse({"error": str(e)}, status=500)
     
 @require_http_methods(['GET'])
 def get_order_payment_details(request: HttpRequest):
