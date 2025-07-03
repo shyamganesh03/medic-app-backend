@@ -34,7 +34,7 @@ def create_order(request: HttpRequest):
         total_amount = data.get('total_amount')
         currency = data.get('currency')
         
-        logger.info(f"Payloads Data = {customer_id,cart_items,total_amount,currency}")
+        logger.info(f"Payloads Data = {customer_id} ,{cart_items} , {total_amount}, {currency}")
         
         if not customer_id or not cart_items or not total_amount or not currency:
             return JsonResponse({"error":"some fields are missing customer_id, cart_items, total_amount, currency"},status=500)
@@ -182,4 +182,66 @@ def get_order_payment_details(request: HttpRequest):
             return JsonResponse({"error": final_response['message']}, status=404)
         return JsonResponse({"payment_details": final_response}, status=200)
     except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+    
+import json
+import logging
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.http import JsonResponse, HttpRequest
+from django.db import connection
+
+logger = logging.getLogger(__name__)
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def revoke_order(request: HttpRequest):
+    try:
+        data = json.loads(request.body)
+        order_id = data.get('order_id')
+        logger.info(f"Order ID - {order_id}")
+
+        if not order_id:
+            return JsonResponse({"error": "order_id is mandatory."}, status=400)
+
+        with connection.cursor() as cursor:
+            # Get order item IDs
+            cursor.execute('SELECT order_items_ids FROM orders WHERE id = %s', [order_id])
+            row = cursor.fetchone()
+            if not row:
+                return JsonResponse({"error": "Order not found."}, status=404)
+            columns = [col[0] for col in cursor.description]
+            order_item_ids = dict(zip(columns, row))
+            
+            logger.info(f"order_item_ids = {order_item_ids}") 
+
+            if not order_item_ids:
+                return JsonResponse({"message": "No order items to revoke."}, status=200)
+            id_list = order_item_ids.get('order_items_ids').get('ids')
+            logger.info(f"id_list = {id_list}") 
+            
+            for order_item_id in id_list:
+                logger.info(f"order_item_id: {order_item_id}")
+                cursor.execute('SELECT quantity, product_id FROM order_items WHERE id = %s', [order_item_id])
+                row2 = cursor.fetchone()
+
+                if not row2:
+                    logger.warning(f"Order item not found: {order_item_id}")
+                    continue
+
+                quantity, product_id = row2
+                
+                logger.info("product items = ",quantity, product_id)
+
+                # Update product stock
+                cursor.execute(
+                    'UPDATE products SET available_stock = available_stock + %s WHERE id = %s',
+                    [quantity, product_id]
+                )
+                cursor.execute('UPDATE orders SET payment_status = %s WHERE id = %s',['failed',order_id])
+
+        return JsonResponse({"message": "Order revoked and stock updated successfully."}, status=200)
+
+    except Exception as e:
+        logger.exception("An error occurred while revoking the order.")
         return JsonResponse({"error": str(e)}, status=500)
